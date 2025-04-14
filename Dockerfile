@@ -1,25 +1,27 @@
-# Usa una imagen base de PHP
-FROM php:8.0-fpm
+FROM debian:bullseye-slim
 
-# Instalar dependencias necesarias
+# Agregar repositorios de PHP
 RUN apt-get update && apt-get install -y \
+    lsb-release \
+    ca-certificates \
+    curl \
+    gnupg2 \
+    && curl -fsSL https://packages.sury.org/php/README.txt | bash -x \
+    && apt-get update && apt-get install -y \
     php-cli \
-    php-xml \
     php-mbstring \
+    php-xml \
     curl \
     && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Copiar los archivos de tu proyecto al contenedor
+# Copiar tu código fuente al contenedor
 COPY . /var/www/html
 
 # Establecer el directorio de trabajo
 WORKDIR /var/www/html
 
-# Instalar las dependencias del proyecto con Composer
-RUN composer install --no-dev
-
-# Exponer el puerto que utilizará PHP-FPM (Render lo asignará dinámicamente)
+# Exponer el puerto 80 (o el que necesites)
 EXPOSE 80
 
-# Comando para iniciar PHP-FPM (Render manejará el puerto automáticamente)
-CMD ["php-fpm"]
+# Comando para iniciar el servidor PHP
+CMD ["php", "-S", "0.0.0.0:80", "-t", "/var/www/html"]
