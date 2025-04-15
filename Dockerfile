@@ -1,4 +1,3 @@
-# Usar imagen base de PHP 8.2 con FPM sobre Debian Bullseye
 FROM php:8.2-fpm-bullseye
 
 # Actualizar paquetes e instalar dependencias del sistema
@@ -9,7 +8,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libwebp-dev \
     libxpm-dev \
     libzip-dev \
-    libonig-dev \                 # Necesario para mbstring
+    libonig-dev \
     zip \
     unzip \
     curl \
@@ -38,7 +37,7 @@ WORKDIR /var/www/html
 # Copiar el código fuente
 COPY . .
 
-# Instalar dependencias de Composer (opcional si no tienes composer.lock)
+# Instalar dependencias de Composer
 RUN composer install --optimize-autoloader --no-dev || true
 
 # Dar permisos correctos
