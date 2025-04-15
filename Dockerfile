@@ -1,23 +1,16 @@
-FROM php:8.2-fpm-bullseye
+FROM php:8.2-fpm
 
-# Actualizar paquetes e instalar dependencias del sistema
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libpng-dev \
-    libjpeg62-turbo-dev \
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
-    libwebp-dev \
-    libxpm-dev \
-    libzip-dev \
+    libjpeg62-turbo-dev \
+    libpng-dev \
     libonig-dev \
+    libxml2-dev \
     zip \
     unzip \
     curl \
-    nginx \
-    && apt-get clean \
-    && rm -rf /var/lib/apt/lists/*
-
-# Configurar e instalar extensiones de PHP
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-xpm \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
         gd \
         pdo \
@@ -28,31 +21,22 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp --with-x
         zip
 
 # Instalar Composer
-RUN curl -sS https://getcomposer.org/installer | php \
-    -- --install-dir=/usr/local/bin --filename=composer
+RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Establecer el directorio de trabajo
-WORKDIR /var/www/html
+# Crear carpeta de trabajo
+WORKDIR /var/www
 
-# Copiar el código fuente
+# Copiar archivos del proyecto
 COPY . .
 
-# Instalar dependencias de Composer
-RUN composer install --optimize-autoloader --no-dev || true
+# Instalar dependencias PHP (Laravel)
+RUN composer install --no-dev --optimize-autoloader || true
 
-# Dar permisos correctos
-RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache \
-    && chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
+# Generar APP_KEY si es Laravel
+RUN php artisan key:generate || true
 
-# Copiar configuración de Nginx
-COPY ./nginx.conf /etc/nginx/sites-available/default
-
-# Copiar script de inicio
-COPY ./start.sh /start.sh
-RUN chmod +x /start.sh
-
-# Exponer el puerto
-EXPOSE 80
+# Puerto por defecto
+EXPOSE 8000
 
 # Comando de inicio
-CMD ["/start.sh"]
+CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
