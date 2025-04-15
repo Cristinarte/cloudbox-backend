@@ -1,8 +1,11 @@
 # Usar una imagen base de PHP con FPM
 FROM php:8.2-fpm
 
+# Actualizar los índices de paquetes
+RUN apt-get update
+
 # Instalar dependencias necesarias
-RUN apt-get update && apt-get install -y \
+RUN apt-get install -y --no-install-recommends \
     libpng-dev \
     libjpeg-dev \
     libfreetype6-dev \
@@ -10,10 +13,12 @@ RUN apt-get update && apt-get install -y \
     unzip \
     curl \
     nginx \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install gd pdo pdo_mysql mbstring xml bcmath \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
+
+# Configurar e instalar extensiones de PHP
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) gd pdo pdo_mysql mbstring xml bcmath
 
 # Instalar Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
