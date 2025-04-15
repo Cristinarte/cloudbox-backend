@@ -1,13 +1,13 @@
-# Usar una imagen base de PHP con FPM
-FROM php:8.2-fpm
+# Usar una imagen base específica de PHP con FPM basada en Debian Bullseye
+FROM php:8.2-fpm-bullseye
 
 # Actualizar los índices de paquetes
 RUN apt-get update
 
-# Instalar dependencias necesarias
+# Instalar dependencias necesarias para GD y otras extensiones
 RUN apt-get install -y --no-install-recommends \
     libpng-dev \
-    libjpeg-dev \
+    libjpeg62-turbo-dev \
     libfreetype6-dev \
     zip \
     unzip \
@@ -16,9 +16,11 @@ RUN apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Configurar e instalar extensiones de PHP
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd pdo pdo_mysql mbstring xml bcmath
+# Configurar la extensión GD por separado
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg=/usr/include/
+
+# Instalar extensiones PHP
+RUN docker-php-ext-install -j$(nproc) gd pdo pdo_mysql mbstring xml bcmath
 
 # Instalar Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
