@@ -1,42 +1,63 @@
-FROM php:8.2-fpm
+# Usar una imagen base específica de PHP con FPM basada en Debian Bullseye
+FROM php:8.2-fpm-bullseye
 
-# Instalar dependencias del sistema
-RUN apt-get update && apt-get install -y \
+# Actualizar los índices de paquetes
+RUN apt-get update
+
+# Instalar dependencias necesarias para GD y otras extensiones
+RUN apt-get install -y --no-install-recommends \
     libfreetype6-dev \
     libjpeg62-turbo-dev \
     libpng-dev \
     libonig-dev \
     libxml2-dev \
-    zip \
+    libzip-dev \
     unzip \
     curl \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) \
-        gd \
-        pdo \
-        pdo_mysql \
-        mbstring \
-        xml \
-        bcmath \
-        zip
+    && apt-get clean \
+    && rm -rf /var/lib/apt/lists/*
+
+# Instalar una versión específica de libzip que sea compatible con PHP
+RUN apt-get install -y libzip-dev
+
+# Configurar la extensión GD por separado
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg
+
+# Instalar las extensiones PHP necesarias
+RUN docker-php-ext-install -j$(nproc) \
+    gd \
+    pdo \
+    pdo_mysql \
+    mbstring \
+    xml \
+    bcmath \
+    zip
 
 # Instalar Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Crear carpeta de trabajo
-WORKDIR /var/www
+# Establecer el directorio de trabajo
+WORKDIR /var/www/html
 
-# Copiar archivos del proyecto
+# Copiar el código fuente
 COPY . .
 
-# Instalar dependencias PHP (Laravel)
-RUN composer install --no-dev --optimize-autoloader || true
+# Instalar dependencias de Composer
+RUN composer install --optimize-autoloader --no-dev
 
-# Generar APP_KEY si es Laravel
-RUN php artisan key:generate || true
+# Dar permisos correctos
+RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
+RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Puerto por defecto
-EXPOSE 8000
+# Configurar Nginx
+COPY ./nginx.conf /etc/nginx/sites-available/default
 
-# Comando de inicio
-CMD ["php", "artisan", "serve", "--host=0.0.0.0", "--port=8000"]
+# Exponer el puerto 80
+EXPOSE 80
+
+# Copiar script de inicio
+COPY ./start.sh /start.sh
+RUN chmod +x /start.sh
+
+# Comando para iniciar PHP-FPM y Nginx
+CMD ["/start.sh"]
