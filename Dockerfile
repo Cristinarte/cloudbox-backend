@@ -1,11 +1,8 @@
-# Usar una imagen base específica de PHP con FPM basada en Debian Bullseye
+# Usar una imagen base de PHP 8.2 con FPM
 FROM php:8.2-fpm-bullseye
 
-# Actualizar los índices de paquetes
-RUN apt-get update
-
-# Instalar dependencias necesarias para GD y otras extensiones
-RUN apt-get install -y --no-install-recommends \
+# Actualizar y instalar las dependencias necesarias
+RUN apt-get update && apt-get install -y \
     libfreetype6-dev \
     libjpeg62-turbo-dev \
     libpng-dev \
@@ -14,17 +11,13 @@ RUN apt-get install -y --no-install-recommends \
     libzip-dev \
     unzip \
     curl \
+    nginx \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Instalar una versión específica de libzip que sea compatible con PHP
-RUN apt-get install -y libzip-dev
-
-# Configurar la extensión GD por separado
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg
-
-# Instalar las extensiones PHP necesarias
-RUN docker-php-ext-install -j$(nproc) \
+# Configurar e instalar extensiones de PHP
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install -j$(nproc) \
     gd \
     pdo \
     pdo_mysql \
@@ -49,7 +42,7 @@ RUN composer install --optimize-autoloader --no-dev
 RUN chown -R www-data:www-data /var/www/html/storage /var/www/html/bootstrap/cache
 RUN chmod -R 775 /var/www/html/storage /var/www/html/bootstrap/cache
 
-# Configurar Nginx
+# Copiar archivo de configuración de Nginx
 COPY ./nginx.conf /etc/nginx/sites-available/default
 
 # Exponer el puerto 80
