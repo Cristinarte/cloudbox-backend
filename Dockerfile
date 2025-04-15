@@ -1,14 +1,13 @@
 # Usar una imagen base específica de PHP con FPM basada en Debian Bullseye
 FROM php:8.2-fpm-bullseye
 
-# Actualizar los índices de paquetes
-RUN apt-get update
-
-# Instalar dependencias necesarias para GD y otras extensiones
-RUN apt-get install -y --no-install-recommends \
+# Actualizar los índices de paquetes e instalar dependencias
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libpng-dev \
     libjpeg62-turbo-dev \
     libfreetype6-dev \
+    libwebp-dev \
+    libxpm-dev \
     zip \
     unzip \
     curl \
@@ -16,8 +15,8 @@ RUN apt-get install -y --no-install-recommends \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
-# Configurar la extensión GD por separado
-RUN docker-php-ext-configure gd --with-freetype --with-jpeg=/usr/include/
+# Configurar la extensión GD
+RUN docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp
 
 # Instalar extensiones PHP
 RUN docker-php-ext-install -j$(nproc) gd pdo pdo_mysql mbstring xml bcmath
@@ -25,13 +24,13 @@ RUN docker-php-ext-install -j$(nproc) gd pdo pdo_mysql mbstring xml bcmath
 # Instalar Composer
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 
-# Establecer el directorio de trabajo
+# Establecer directorio de trabajo
 WORKDIR /var/www/html
 
 # Copiar el código fuente
 COPY . .
 
-# Instalar dependencias de Composer
+# Instalar dependencias PHP
 RUN composer install --optimize-autoloader --no-dev
 
 # Dar permisos correctos
