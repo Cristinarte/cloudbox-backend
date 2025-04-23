@@ -38,8 +38,8 @@ class ContenidoController extends Controller
             'coleccion_id' => 'required|exists:colecciones,id',
             'titulo' => 'required|string|max:255',
             'url' => 'required|url',
-            'descripcion' => 'required|string',
-            'imagen' => 'required|image|mimes:jpg,jpeg,png,gif|max:10240',
+            'descripcion' => 'nullable|string',
+            'imagen' => 'nullable|image|mimes:jpg,jpeg,png,gif|max:10240',
         ]);
     
         $coleccion = Coleccion::findOrFail($request->coleccion_id);

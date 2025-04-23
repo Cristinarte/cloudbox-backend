@@ -32,7 +32,14 @@ class RegisteredUserController extends Controller
             'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
             'password' => ['required',  Rules\Password::defaults()],
             'role_id' => ['required', 'exists:roles,id'],  // Validamos que el role_id exista en la tabla roles
-        ]);
+        ], [
+            'password.min' => 'La contraseña debe tener al menos 8 caracteres.',
+            'email.unique' => 'Este correo electrónico ya está registrado.',
+            'required' => 'El campo :attribute es obligatorio.',
+        ]
+    
+    
+        );
     
         // Si el rol no se pasa (es decir, es un usuario común), asignamos el rol por defecto
         $roleId = $request->role_id ?? 1;  // Si no hay role_id en la solicitud, asigna 1 por defecto (usuario)

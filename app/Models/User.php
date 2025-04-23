@@ -20,11 +20,11 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'nombre',     // Cambié 'name' por 'nombre' según tu migración
-        'alias',      // Agregué 'alias' como campo asignable
-        'email',      // 'email' es asignable
-        'password',   // 'password' es asignable
-        'role_id',    // 'role_id' ahora es asignable
+        'nombre',     
+        'alias',      
+        'email',      
+        'password',   
+        'role_id',    
     ];
 
     /**
@@ -71,4 +71,3 @@ class User extends Authenticatable
         $this->notify(new CustomResetPassword($token));
     }
 }
-

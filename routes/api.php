@@ -6,6 +6,7 @@ use App\Http\Controllers\Auth\RegisteredUserController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Api\ColeccionesController;
+use App\Http\Controllers\Api\CompartidoController;
 use App\Http\Controllers\Api\ContenidoController;
 use App\Http\Controllers\Auth\PasswordResetLinkController;
 use App\Http\Controllers\Auth\NewPasswordController;
@@ -70,3 +71,17 @@ Route::post('/forgot-password', [PasswordResetLinkController::class, 'store'])
 Route::post('/reset-password', [NewPasswordController::class, 'store'])
     ->middleware('guest')
     ->name('password.update');
+
+// Rutas para compartir contenido y colecciones
+Route::controller(CompartidoController::class)->group(function () {
+    // Ruta pública para ver contenido compartido
+    Route::get('/compartido/{token}', 'show')->name('compartido.show');
+
+    // Rutas protegidas que requieren autenticación
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/colecciones/{id}/share', 'share');
+        Route::post('/contenidos/{id}/share', 'share');
+        Route::delete('/compartido/{token}', 'revoke');
+    });
+});
+    
